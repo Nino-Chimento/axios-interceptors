@@ -1,0 +1,43 @@
+image: node:18 # contains Python (needed in Prettier step)
+pipelines:
+  pull-requests:
+    '**':
+      - step:
+          name: 'Install node dependencies'
+          caches:
+            - node
+            - yarn
+            - cypress
+          script:
+            - yarn install --frozen-lockfile
+            - yarn cypress install # IMPORTANT: reinstall Cypress to ensure persistence in cache
+      - step:
+          name: 'e2e tests'
+          image: cypress/base:16 # Contains dependencies to run Cypress
+          caches:
+            - node
+            - cypress
+          script:
+            - yarn test:e2e:run
+      - step:
+          name: 'Unit tests'
+          caches:
+            - node
+          script:
+            - yarn test:unit:coverage
+      - step:
+          name: 'Lint check'
+          caches:
+            - node
+          script:
+            - yarn lint:check
+      - step:
+          name: 'Prettier check'
+          caches:
+            - node
+          script:
+            - yarn prettier:check
+definitions:
+  caches:
+    yarn: $HOME/.cache
+    cypress: $HOME/.cache/Cypress
